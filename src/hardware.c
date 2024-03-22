@@ -31,16 +31,14 @@ int rand(void) {
 }
 
 int puts(const char *text) {
-    // Calculate the length of the string
-    uint16_t len = 0;
-    const char *ptr = text;
-    while (*ptr++ != '\0') {
-        len++;
-    }
-    // Transmit the string
-    int status = (HAL_UART_Transmit(&huart2, (uint8_t*)text, len, HAL_MAX_DELAY));
-    return status;
-
+  // Calculate the length of the string
+  uint16_t len = 0;
+  const char *ptr = text;
+  while (*ptr++ != '\0') {
+    len++;
+  }
+  // Transmit the string
+  return (HAL_UART_Transmit(&huart2, (uint8_t *)text, len, HAL_MAX_DELAY));
 }
 
 static char uart_read_char() {
