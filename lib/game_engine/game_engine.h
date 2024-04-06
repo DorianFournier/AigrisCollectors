@@ -55,6 +55,12 @@ typedef struct {
   T_base base;
 } T_game_data;
 
+typedef struct {
+  uint8_t ship_id;
+  uint16_t planet_id;
+  uint16_t distance;
+} T_test;
+
 extern uint8_t nb_planets;
 extern uint8_t nb_ships;
 extern T_game_data game_data[NUMBER_OF_GAME_DATA];
@@ -95,5 +101,7 @@ void set_direction(T_mode_direction mode, T_ship ship, T_planet planet,
 
 void acquire_game_data_mutex(void);
 void release_game_data_mutex(void);
+
+T_test get_nearest_planet_available(T_game_data *game_data);
 
 #endif // GAME_ENGINE_H

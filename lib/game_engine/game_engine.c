@@ -1,9 +1,10 @@
 #include "game_engine.h"
 #include "OS_engine.h"
-
+bool is_comptetion_started_for_all = false;
 uint8_t nb_planets = 0;
 uint8_t nb_ships = 0;
-bool flag = false;
+bool game_state = true; // TODO : RENAME THIS
+
 T_game_data game_data[NUMBER_OF_GAME_DATA];
 T_planet planets[MAX_PLANETS_NUMBER] = {
     {1, 1, 1, 1, 1}, {2, 2, 2, 2, 2}, {3, 3, 3, 3, 3}, {4, 4, 4, 4, 4},
@@ -143,11 +144,9 @@ T_point get_base_position(T_base base) {
   return base_pos;
 }
 
-void acquire_game_data_mutex(void) {
-  os_acquire_mutex(game_data_mutex_id, os_wait_forever);
-}
+void acquire_game_data_mutex(void) { os_acquire_game_data_mutex(); }
 
-void release_game_data_mutex(void) { os_release_mutex(game_data_mutex_id); }
+void release_game_data_mutex(void) { os_release_game_data_mutex(); }
 
 // set_direction(GO_TO_PLANET, game_data.ship)
 void set_direction(T_mode_direction mode, T_ship ship, T_planet planet,
@@ -189,12 +188,18 @@ void collect_planet(T_game_data *game_data, char *command_buffer) {
                    command_buffer);
 }
 
-void parse_radar_data(char *answer_buffer) {
+void parse_radar_data_mutex(char *answer_buffer) {
   acquire_game_data_mutex();
   parse_planets(answer_buffer, game_data, &nb_planets);
   parse_ships(answer_buffer, game_data, &nb_ships);
   parse_base(answer_buffer, game_data);
   release_game_data_mutex();
+}
+
+void parse_radar_data(char *answer_buffer) {
+  parse_planets(answer_buffer, game_data, &nb_planets);
+  parse_ships(answer_buffer, game_data, &nb_ships);
+  parse_base(answer_buffer, game_data);
 }
 
 void parse_planets(const char *server_response, T_game_data *game_data,
@@ -206,7 +211,9 @@ void parse_planets(const char *server_response, T_game_data *game_data,
   while (delimiter != NULL) {
     if (*str == SERVER_RESPONSE_PLANET_DELIMITER) {
       if (*num_planets >= MAX_PLANETS_NUMBER) {
-        break;
+        while (1) {
+          puts("num_planets > MAX_PLANETS_NUMBE\n");
+        }
       }
       sscanf(str, "P %hu %hu %hu %hu %hu",
              &game_data->planets[*num_planets].planet_ID,
@@ -284,18 +291,44 @@ void initialize_game_data(T_game_data *game_data) {
     game_data->planets[i].planet_ID = 0;
     game_data->planets[i].pos_X = 0;
     game_data->planets[i].pos_Y = 0;
-    game_data->planets[i].ship_ID = 0;
+    game_data->planets[i].ship_ID = -1;
     game_data->planets[i].planet_saved = 0;
   }
 
   for (int i = 0; i < 9 * 4; i++) {
-    game_data->ships[i].team_ID = 3;
-    game_data->ships[i].ship_ID = 3;
-    game_data->ships[i].pos_X = 3;
-    game_data->ships[i].pos_Y = 3;
-    game_data->ships[i].broken = 3;
+    game_data->ships[i].team_ID = 0;
+    game_data->ships[i].ship_ID = 0;
+    game_data->ships[i].pos_X = 0;
+    game_data->ships[i].pos_Y = 0;
+    game_data->ships[i].broken = 0;
   }
 
   game_data->base.pos_X = 0;
   game_data->base.pos_Y = 0;
+}
+
+T_test get_nearest_planet_available(T_game_data *game_data) {
+  T_test best_data = {0, 0, 20000};
+  uint16_t distance = 0;
+
+  for (uint8_t ship_num = 8; ship_num <= SHIPS_NUMBER; ship_num++) {
+    for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER;
+         planet_num++) {
+      distance = get_distance_between_two_points(
+          get_ship_position(game_data->ships[ship_num]),
+          get_planet_position(game_data->planets[planet_num]));
+
+      // printf("Distance / ship_id -> planet_id : %d / %d -> %d\n", distance,
+      //        ship_num, planet_num);
+      if (distance < best_data.distance) {
+        // printf("Distance / ship_id -> planet_id : %d / %d -> %d\n", distance,
+        //        ship_num, planet_num);
+        best_data.distance = distance;
+        best_data.ship_id = ship_num;
+        best_data.planet_id = planet_num;
+      }
+    }
+  }
+
+  return best_data;
 }

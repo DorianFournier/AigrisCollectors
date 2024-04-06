@@ -3,6 +3,7 @@
 #include "OS_types.h"
 #include <constants.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 bool is_comptetion_started = false;
@@ -10,6 +11,8 @@ bool rx_command_received = false;
 char rx_command_buffer[RX_COMMAND_BUFFER_SIZE] = {""};
 
 static os_mutex_id uart_mutex_id;
+static os_mutex_id game_data_mutex_id;
+static os_mutex_id game_state_mutex_id;
 
 void os_engine_init(void) {
   const os_mutex_attr uart_mutex_attributes = {
@@ -21,6 +24,11 @@ void os_engine_init(void) {
       .name = "dataMutex", osMutexPrioInherit, NULL, 0U};
 
   game_data_mutex_id = os_create_mutex(game_data_mutex_attributes);
+
+  const os_mutex_attr game_state_mutex_attributes = {
+      .name = "gameState", osMutexPrioInherit, NULL, 0U};
+
+  game_state_mutex_id = os_create_mutex(game_state_mutex_attributes);
 }
 
 void wait_start(void) {
@@ -30,13 +38,13 @@ void wait_start(void) {
 }
 
 os_mutex_id os_create_mutex(const os_mutex_attr mutex_attribute) {
-  os_mutex_id uart_mutex = osMutexNew(&mutex_attribute);
+  os_mutex_id mutex = osMutexNew(&mutex_attribute);
 
-  if (uart_mutex == NULL)
+  if (mutex == NULL)
     while (1)
-      ;
+      puts("ERROR CREATING MUTEX\n");
 
-  return uart_mutex;
+  return mutex;
 }
 
 void os_acquire_mutex(os_mutex_id mutex_id, uint32_t timeout) {
@@ -44,17 +52,31 @@ void os_acquire_mutex(os_mutex_id mutex_id, uint32_t timeout) {
 
   if (aquire_status != osOK)
     while (1) {
-      puts("ERRORS ACQUIRE\n");
+      puts("ERROR ACQUIRE\n");
     }
 }
 
 void os_release_mutex(os_mutex_id mutex_id) {
-  osStatus_t release_status = osMutexRelease(uart_mutex_id);
+  osStatus_t release_status = osMutexRelease(mutex_id);
 
   if (release_status != osOK)
     while (1) {
-      puts("ERRORS RELEASE\n");
+      puts("ERROR RELEASE\n");
     }
+}
+
+void os_acquire_game_data_mutex(void) {
+  os_acquire_mutex(game_data_mutex_id, os_wait_forever);
+}
+
+void os_release_game_data_mutex(void) { os_release_mutex(game_data_mutex_id); }
+
+void os_acquire_game_state_mutex(void) {
+  os_acquire_mutex(game_state_mutex_id, osWaitForever);
+}
+
+void os_release_game_state_mutex(void) {
+  os_release_mutex(game_state_mutex_id);
 }
 
 void send_command(char *command, char *response_buffer) {
@@ -100,33 +122,42 @@ char *getsMutex(char *text) {
   return original_str;
 }
 
+void read_game_data_mutex() {
+  os_acquire_mutex(game_data_mutex_id, osWaitForever);
+}
 uint32_t getFreeStackSpace(os_thread_id thread_id) {
-  uint32_t stack_space = osThreadGetStackSpace(thread_id);
-  char space[40] = {0};
-  sprintf(space, "Free stack space : %ld\n", stack_space);
-  putsMutex(space);
-
-  return stack_space;
+  return osThreadGetStackSpace(thread_id);
 }
 
 uint32_t getStackSize(os_thread_id thread_id) {
-  uint32_t stack_size = osThreadGetStackSize(thread_id);
-  char buff_size[40] = {0};
-  sprintf(buff_size, "Stack size : %ld\n", stack_size);
-  putsMutex(buff_size);
-
-  return stack_size;
+  uint32_t task_size = TASKS_SIZES;
+  if (strstr(osThreadGetName(thread_id), "exploratorsTask") != NULL) {
+    task_size = TASKS_SIZES_EXPLORER;
+  }
+  return task_size;
 }
 
-void getUsedStackSpace(os_thread_id thread_id) {
-  uint32_t used_stack_size =
-      getStackSize(thread_id) - getFreeStackSpace(thread_id);
-
-  char buff_size[40] = {0};
-  sprintf(buff_size, "Used stack space : %ld\n", used_stack_size);
-  putsMutex(buff_size);
+uint32_t getUsedStackSpace(os_thread_id thread_id) {
+  return (getStackSize(thread_id) - getFreeStackSpace(thread_id));
 }
 
-void read_game_data_mutex() {
-  os_acquire_mutex(game_data_mutex_id, osWaitForever);
+void printTaskInformation(os_thread_id thread_id) {
+
+  const char *thread_name =
+      osThreadGetName(thread_id); // Get the thread name pointer
+
+  char buff_information[30] = {0};
+  sprintf(buff_information,
+          // "%s : free stack space : %ld/%ld \n"
+          "%s : %ld/%ld \n", thread_name, getUsedStackSpace(thread_id),
+          getStackSize(thread_id));
+  putsMutex(buff_information);
+}
+
+void printTotalRAMUsage(void) {
+  char buff_information[200] = {0};
+  sprintf(buff_information, "TOTAL RAM USAGE : %d/%d \n",
+          (configTOTAL_HEAP_SIZE - xPortGetFreeHeapSize()),
+          configTOTAL_HEAP_SIZE);
+  putsMutex(buff_information);
 }
