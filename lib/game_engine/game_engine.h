@@ -83,6 +83,7 @@ char *generate_command(T_command_type command_type, uint8_t ship_id,
 void go_to_planet(T_ship ship, T_planet planet);
 void go_to_planet_new(uint8_t ship_id, T_planet planet);
 void go_to_base(T_ship ship, T_base base, T_ships_speed ship_speed);
+void go_to_base_new(uint8_t ship_id, T_base base, T_ships_speed ship_speed);
 void go_to_point(T_ship ship, T_point point);
 void follow_ship(T_ship follower_ship, T_ship ship_to_follow);
 

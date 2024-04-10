@@ -68,6 +68,8 @@ void explorer_manager(uint8_t explorer_id) {
     parse_ships(answer_buffer, game_data);
     parse_base(answer_buffer, game_data);
 
+    // update_planet_collection_status_2(game_data);
+
     release_game_data_mutex();
 
     // memset(answer_buffer, 0, sizeof(answer_buffer));
@@ -185,13 +187,23 @@ void go_to_base(T_ship ship, T_base base, T_ships_speed ship_speed) {
       ship_speed));
 }
 
+void go_to_base_new(uint8_t ship_id, T_base base, T_ships_speed ship_speed) {
+  T_ship ship = game_data->ships[ship_id];
+  T_point ship_pos = get_ship_position(ship);
+  T_point base_pos = get_base_position(base);
+
+  send_command(generate_command(
+      MOVE_CMD, ship_id, get_angle_between_two_points(ship_pos, base_pos),
+      ship_speed));
+}
+
 void parse_game_data(char *answer_buffer, T_game_data *game_data) {
   // aquire_game_data_mutex();
   parse_planets(answer_buffer, game_data, &nb_planets);
   parse_ships(answer_buffer, game_data);
   parse_base(answer_buffer, game_data);
-  update_planet_collection_status_2(game_data);
-  // release_game_data_mutex();
+  // update_planet_collection_status_2(game_data);
+  //  release_game_data_mutex();
 }
 
 void parse_planets(const char *server_response, T_game_data *game_data,
@@ -218,7 +230,7 @@ void parse_planets(const char *server_response, T_game_data *game_data,
     delimiter = strchr(str, SERVER_RESPONSE_DELIMITER[0]);
   }
 
-  update_planet_collection_status_2(game_data);
+  // update_planet_collection_status_2(game_data);
 }
 
 void parse_ships(const char *server_response, T_game_data *game_data) {
@@ -300,7 +312,7 @@ void initialize_game_data(T_game_data *game_data) {
   game_data->base.pos_X = 0;
   game_data->base.pos_Y = 0;
 
-  update_planet_collection_status_2(game_data);
+  // update_planet_collection_status_2(game_data);
 }
 
 void follow_ship(T_ship follower_ship, T_ship ship_to_follow) {
@@ -447,6 +459,9 @@ void update_planet_collection_status_2(T_game_data *game_data) {
          game_data->planets[planet_num].planet_saved !=
              1)) // Manages a planet being collected
     {
+      // putsMutex(" SHIP ID : ");
+      // putsMutex(game_data->planets[planet_num].ship_ID);
+      // TODO test with -1
       set_planet_collection_status(game_data->planets[planet_num].ship_ID,
                                    planet_num, COLLECTING, game_data);
     } else if (game_data->planets[planet_num].ship_ID == -1 &&
@@ -463,21 +478,34 @@ void update_planet_collection_status_2(T_game_data *game_data) {
 }
 
 void auto_collect_planet_2(uint8_t ship_id, T_game_data *game_data) {
-  update_planet_collection_status_2(game_data);
+  // update_planet_collection_status_2(game_data);
 
   bool is_ship_available = false;
   uint8_t planet_id = 0;
 
   for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER; planet_num++) {
     if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
-        game_data->planets[planet_num].ship_ID == -1) {
+        game_data->planets[planet_num].ship_ID == -1 &&
+        game_data->planets[planet_num].planet_status != COLLECTING) {
       // go_to_planet(game_data->ships[ship_id],
       // game_data->planets[planet_num]);
+      set_planet_collection_status(ship_id, planet_num, COLLECTING_INCOMING,
+                                   game_data);
       go_to_planet_new(ship_id, game_data->planets[planet_num]);
+
       break;
     } else if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
                game_data->planets[planet_num].ship_ID != -1) {
-      go_to_base(game_data->ships[ship_id], game_data->base, COLLECTOR_SPEED);
+      // go_to_base(game_data->ships[ship_id], game_data->base,
+      // COLLECTOR_SPEED);
+      set_planet_collection_status(ship_id, planet_num, COLLECTING, game_data);
+      go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+
+      // while (1) {
+      //   putsMutex("ON RENTRE JAMAISD LA GROOSS");
+      //   os_delay(OS_DELAY);
+      // }
+
       break;
     } else if (game_data->planets[planet_num].busy_ship_ID == -1) {
       is_ship_available = true;
@@ -491,6 +519,8 @@ void auto_collect_planet_2(uint8_t ship_id, T_game_data *game_data) {
     set_planet_collection_status(ship_id, planet_id, COLLECTING_INCOMING,
                                  game_data);
   } else {
-    putsMutex("T TEUBE");
+    // putsMutex("T TEUBE");
   }
+
+  // update_planet_collection_status_2(game_data);
 }
