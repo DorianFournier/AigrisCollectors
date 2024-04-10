@@ -81,7 +81,12 @@ void collector_manager(uint8_t collector_id) {
   while (1) {
     aquire_game_data_mutex();
 
-    auto_collect_planet_2(collector_id, game_data);
+    if (collector_id == COLLECTOR_1) {
+      auto_collect_planet_collector_1(collector_id, game_data);
+    } else if (collector_id == COLLECTOR_2) {
+      auto_collect_planet_collector_2(collector_id, game_data);
+    }
+    // auto_collect_planet_2(collector_id, game_data);
     // auto_collect_planet_2(COLLECTOR_2, game_data);
     //  auto_collect_planet_2(collector_id, game_data);
     //   os_delay(OS_DELAY + 20);
@@ -107,7 +112,7 @@ void attacker_manager(uint8_t id) {
     aquire_game_data_mutex();
 
     if (id == ATTACKER_1) {
-      follow_ship(game_data->ships[id], game_data->ships[COLLECTOR_1]);
+      follow_ship_new(id, game_data->ships[COLLECTOR_2]);
     }
 
     if (id == ATTACKER_1 || id == ATTACKER_2 || id == ATTACKER_3 ||
@@ -174,10 +179,15 @@ void go_to_planet_new(uint8_t ship_id, T_planet planet) {
   T_ship ship = game_data->ships[ship_id];
   T_point ship_pos = get_ship_position(ship);
   T_point planet_pos = get_planet_position(planet);
-
-  send_command(generate_command(
-      MOVE_CMD, ship_id, get_angle_between_two_points(ship_pos, planet_pos),
-      COLLECTOR_SPEED));
+  if (ship_id == COLLECTOR_1) {
+    send_command(generate_command(
+        MOVE_CMD, ship_id, get_angle_between_two_points(ship_pos, planet_pos),
+        400));
+  } else {
+    send_command(generate_command(
+        MOVE_CMD, ship_id, get_angle_between_two_points(ship_pos, planet_pos),
+        COLLECTOR_SPEED));
+  }
 }
 
 void go_to_base(T_ship ship, T_base base, T_ships_speed ship_speed) {
@@ -323,6 +333,17 @@ void follow_ship(T_ship follower_ship, T_ship ship_to_follow) {
 
   send_command(generate_command(
       MOVE_CMD, follower_ship.ship_ID,
+      get_angle_between_two_points(follower_ship_pos, ship_to_follow_pos),
+      ATTACKER_SPEED));
+}
+
+void follow_ship_new(uint8_t follower_ship_id, T_ship ship_to_follow) {
+  T_ship follower_ship = game_data->ships[follower_ship_id];
+  T_point follower_ship_pos = get_ship_position(follower_ship);
+  T_point ship_to_follow_pos = get_ship_position(ship_to_follow);
+
+  send_command(generate_command(
+      MOVE_CMD, follower_ship_id,
       get_angle_between_two_points(follower_ship_pos, ship_to_follow_pos),
       ATTACKER_SPEED));
 }
@@ -504,54 +525,179 @@ void update_planet_collection_status_new_2(uint8_t ship_id,
   }
 }
 
-void auto_collect_planet_2(uint8_t ship_id, T_game_data *game_data) {
+void auto_collect_planet_collector_1(uint8_t ship_id, T_game_data *game_data) {
   // update_planet_collection_status_2(game_data);
   // update_planet_collection_status_new_2(ship_id, game_data);
+
   static bool is_ship_available = false;
-  uint8_t planet_id = 0;
+  uint8_t planet_id = MAX_PLANETS_NUMBER;
+  planet_id = is_ship_have_a_planet(ship_id, game_data);
 
-  for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER; planet_num++) {
-    if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
-        game_data->planets[planet_num].ship_ID == -1 &&
-        game_data->planets[planet_num].planet_status != COLLECTING) {
-      is_ship_available = false;
-      // go_to_planet(game_data->ships[ship_id],
-      // game_data->planets[planet_num]);
+  if (planet_id == MAX_PLANETS_NUMBER) {
+    for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER;
+         planet_num++) {
+      if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
+          game_data->planets[planet_num].ship_ID == -1 &&
+          game_data->planets[planet_num].planet_status != COLLECTING) {
+        is_ship_available = false;
+        // go_to_planet(game_data->ships[ship_id],
+        // game_data->planets[planet_num]);
 
-      go_to_planet_new(ship_id, game_data->planets[planet_num]);
-      set_planet_collection_status(ship_id, planet_num, COLLECTING_INCOMING,
-                                   game_data);
+        go_to_planet_new(ship_id, game_data->planets[planet_num]);
+        set_planet_collection_status(ship_id, planet_num, COLLECTING_INCOMING,
+                                     game_data);
 
-      break;
-    } else if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
-               game_data->planets[planet_num].ship_ID != -1 &&
-               game_data->planets[planet_num].planet_saved != 1) {
-      is_ship_available = false;
-      // go_to_base(game_data->ships[ship_id], game_data->base,
-      // COLLECTOR_SPEED);
+        break;
+      } else if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
+                 game_data->planets[planet_num].ship_ID != -1 &&
+                 game_data->planets[planet_num].planet_saved != 1) {
+        is_ship_available = false;
+        // go_to_base(game_data->ships[ship_id], game_data->base,
+        // COLLECTOR_SPEED);
 
-      go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
-      set_planet_collection_status(ship_id, planet_num, COLLECTING, game_data);
-      // while (1) {
-      //   putsMutex("ON RENTRE JAMAISD LA GROOSS");
-      //   os_delay(OS_DELAY);
+        go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+        set_planet_collection_status(ship_id, planet_num, COLLECTING,
+                                     game_data);
+        // while (1) {
+        //   putsMutex("ON RENTRE JAMAISD LA GROOSS");
+        //   os_delay(OS_DELAY);
+        // }
+
+        break;
+      }
+      // else if (game_data->planets[planet_num].ship_ID != -1 &&
+      //            game_data->planets[planet_num].busy_ship_ID != ship_id) {
+      //   // putsMutex("T MORT");
+      //   planet_id = planet_num;
+
+      //   // uint8_t stolen_ship_id =
+      //   game_data->planets[planet_num].busy_ship_ID;
+      //   // for (uint8_t pln = 0; pln < MAX_PLANETS_NUMBER; pln++) {
+      //   //   if (game_data->planets[pln].busy_ship_ID == stolen_ship_id) {
+      //   //     set_planet_collection_status(-1, planet_num, FREE, game_data);
+      //   //     // go_to_planet_new(stolen_ship_id,
+      //   //     // game_data->planets[get_nearest_planet_available(
+      //   //     //                      stolen_ship_id, game_data)]);
+      //   //   }
+      //   // }
+      //   // go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+      //   // set_planet_collection_status(ship_id, planet_num, COLLECTING,
+      //   //  game_data);
+      //   //  break;
       // }
-
-      break;
-    } else if (game_data->planets[planet_num].busy_ship_ID == -1) {
-      is_ship_available = true;
+      else if (game_data->planets[planet_num].busy_ship_ID == -1) {
+        is_ship_available = true;
+      }
     }
+
+    if (is_ship_available == true) {
+      planet_id = get_nearest_planet_available(ship_id, game_data);
+      // go_to_planet(game_data->ships[ship_id], game_data->planets[planet_id]);
+      go_to_planet_new(ship_id, game_data->planets[planet_id]);
+      set_planet_collection_status(ship_id, planet_id, COLLECTING_INCOMING,
+                                   game_data);
+    }
+  } else if (planet_id != MAX_PLANETS_NUMBER &&
+             game_data->planets[planet_id].ship_ID != -1) {
+    // putsMutex("ici");
+    //  set_planet_collection_status(ship_id, planet_id, COLLECTING, game_data);
+    go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+    // set_planet_collection_status(ship_id, planet_id, COLLECTING, game_data);
+  } else {
+    // putsMutex("ok");
   }
 
-  if (is_ship_available == true) {
-    planet_id = get_nearest_planet_available(ship_id, game_data);
-    // go_to_planet(game_data->ships[ship_id], game_data->planets[planet_id]);
-    go_to_planet_new(ship_id, game_data->planets[planet_id]);
-    set_planet_collection_status(ship_id, planet_id, COLLECTING_INCOMING,
-                                 game_data);
+  // update_planet_collection_status_2(game_data);
+}
 
+uint8_t is_ship_have_a_planet(uint8_t ship_id, T_game_data *game_data) {
+  for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER; planet_num++) {
+    if (game_data->planets[planet_num].busy_ship_ID != ship_id &&
+        game_data->planets[planet_num].ship_ID == ship_id) {
+      return planet_num;
+    }
+  }
+  return MAX_PLANETS_NUMBER;
+}
+
+void auto_collect_planet_collector_2(uint8_t ship_id, T_game_data *game_data) {
+  // update_planet_collection_status_2(game_data);
+  // update_planet_collection_status_new_2(ship_id, game_data);
+
+  static bool is_ship_available = false;
+
+  uint8_t planet_id = MAX_PLANETS_NUMBER;
+  planet_id = is_ship_have_a_planet(ship_id, game_data);
+
+  if (planet_id == MAX_PLANETS_NUMBER) {
+    for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER;
+         planet_num++) {
+      if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
+          game_data->planets[planet_num].ship_ID == -1 &&
+          game_data->planets[planet_num].planet_status != COLLECTING) {
+        is_ship_available = false;
+        // go_to_planet(game_data->ships[ship_id],
+        // game_data->planets[planet_num]);
+
+        go_to_planet_new(ship_id, game_data->planets[planet_num]);
+        set_planet_collection_status(ship_id, planet_num, COLLECTING_INCOMING,
+                                     game_data);
+
+        break;
+      } else if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
+                 game_data->planets[planet_num].ship_ID != -1 &&
+                 game_data->planets[planet_num].planet_saved != 1) {
+        is_ship_available = false;
+        // go_to_base(game_data->ships[ship_id], game_data->base,
+        // COLLECTOR_SPEED);
+
+        go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+        set_planet_collection_status(ship_id, planet_num, COLLECTING,
+                                     game_data);
+        // while (1) {
+        //   putsMutex("ON RENTRE JAMAISD LA GROOSS");
+        //   os_delay(OS_DELAY);
+        // }
+
+        break;
+      } else if (game_data->planets[planet_num].ship_ID != -1 &&
+                 game_data->planets[planet_num].busy_ship_ID != ship_id) {
+        // putsMutex("T MORT");
+        // planet_id = planet_num;
+
+        uint8_t stolen_ship_id = game_data->planets[planet_num].busy_ship_ID;
+        for (uint8_t pln = 0; pln < MAX_PLANETS_NUMBER; pln++) {
+          if (game_data->planets[pln].busy_ship_ID == stolen_ship_id) {
+            set_planet_collection_status(-1, planet_num, FREE, game_data);
+            go_to_planet_new(stolen_ship_id,
+                             game_data->planets[get_nearest_planet_available(
+                                 stolen_ship_id, game_data)]);
+          }
+        }
+        go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+        set_planet_collection_status(ship_id, planet_num, COLLECTING,
+                                     game_data);
+        break;
+      } else if (game_data->planets[planet_num].busy_ship_ID == -1) {
+        is_ship_available = true;
+      }
+    }
+
+    if (is_ship_available == true) {
+      planet_id = get_nearest_planet_available(ship_id, game_data);
+      // go_to_planet(game_data->ships[ship_id], game_data->planets[planet_id]);
+      go_to_planet_new(ship_id, game_data->planets[planet_id]);
+      set_planet_collection_status(ship_id, planet_id, COLLECTING_INCOMING,
+                                   game_data);
+    }
+  } else if (planet_id != MAX_PLANETS_NUMBER &&
+             game_data->planets[planet_id].ship_ID != -1) {
+    // putsMutex("ici");
+    //  set_planet_collection_status(ship_id, planet_id, COLLECTING, game_data);
+    // go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+    // set_planet_collection_status(ship_id, planet_id, COLLECTING, game_data);
   } else {
-    // putsMutex("T TEUBE");
+    // putsMutex("ok");
   }
 
   // update_planet_collection_status_2(game_data);

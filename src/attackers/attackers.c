@@ -4,7 +4,7 @@
 const osThreadAttr_t attackersTask_attributes = {
     .name = "attackersTask",
     .priority = (osPriority_t)osPriorityNormal,
-    .stack_size = TASKS_SIZES,
+    .stack_size = TASKS_SIZES_ATTACKER,
 };
 
 void StartAttackerTask_1(void *argument) {

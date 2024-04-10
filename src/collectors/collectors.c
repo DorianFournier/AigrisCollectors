@@ -4,7 +4,7 @@
 const osThreadAttr_t collectorsTask_attributes = {
     .name = "collectorsTask",
     .priority = (osPriority_t)osPriorityNormal,
-    .stack_size = TASKS_SIZES,
+    .stack_size = TASKS_SIZES_COLLECTOR,
 };
 
 void StartCollectorTask_1(void *argument) {

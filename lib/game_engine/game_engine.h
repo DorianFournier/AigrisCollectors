@@ -86,7 +86,7 @@ void go_to_base(T_ship ship, T_base base, T_ships_speed ship_speed);
 void go_to_base_new(uint8_t ship_id, T_base base, T_ships_speed ship_speed);
 void go_to_point(T_ship ship, T_point point);
 void follow_ship(T_ship follower_ship, T_ship ship_to_follow);
-
+void follow_ship_new(uint8_t follower_ship_id, T_ship ship_to_follow);
 // Trigonometry functions
 uint16_t get_distance_between_two_points(T_point starting_point,
                                          T_point ending_point);
@@ -105,6 +105,8 @@ void update_planet_collection_status(T_game_data *game_data);
 
 void update_planet_collection_status_2(T_game_data *game_data);
 void auto_collect_planet_2(uint8_t ship_id, T_game_data *game_data);
+void auto_collect_planet_collector_1(uint8_t ship_id, T_game_data *game_data);
+void auto_collect_planet_collector_2(uint8_t ship_id, T_game_data *game_data);
 
 T_point get_ship_position(T_ship ship);
 T_point get_planet_position(T_planet planet);
@@ -112,6 +114,7 @@ T_point get_base_position(T_base base);
 uint8_t get_nearest_planet(uint8_t ship_id, T_game_data *game_data);
 uint8_t get_nearest_planet_available(uint8_t ship_id, T_game_data *game_data);
 uint16_t check_desired_ship_speed(uint8_t ship_id, uint16_t desired_speed);
+uint8_t is_ship_have_a_planet(uint8_t ship_id, T_game_data *game_data);
 
 // Initialiazing functions
 void initialize_game_data(T_game_data *game_data);

@@ -214,10 +214,6 @@ void test_update_planet_collection_status(void) {
   TEST_ASSERT_EQUAL_INT(-1,
                         test_game_data->planets[5].busy_ship_ID); // PLANET 6
 
-  // TEST_ASSERT_EQUAL_INT(COLLECTED,
-  //                       test_game_data->planets[6].planet_status); // PLANET
-  //                       7
-
   TEST_ASSERT_EQUAL_INT(test_game_data->planets[6].ship_ID,
                         test_game_data->planets[6].busy_ship_ID); // PLANET 7
 }
@@ -248,6 +244,36 @@ void test_get_nearest_planet_available(void) {
       6, get_nearest_planet_available(COLLECTOR_1, test_game_data));
 }
 
+void test_is_ship_have_a_planet(void) {
+  T_game_data test_game_data[NUMBER_OF_GAME_DATA] = {
+      {{{1, 10000, 10000, -1, 0, -1, FREE},
+        {2, 10000, 20000, -1, 0, -1, FREE},
+        {3, 15000, 15000, -1, 0, -1, FREE},
+        {4, 10000, 20000, -1, 0, -1, FREE},
+        {5, 10000, 10000, COLLECTOR_1, 0, -1, FREE},
+        {6, 10000, 20000, -1, 0, -1, FREE},
+        {7, 16500, 17500, -1, 0, -1, FREE},
+        {8, 10000, 12000, -1, 0, -1, FREE}},
+       {{0, ATTACKER_1, 0, 0, 0},
+        {0, ATTACKER_2, 0, 0, 0},
+        {0, ATTACKER_3, 0, 0, 0},
+        {0, ATTACKER_4, 0, 0, 0},
+        {0, ATTACKER_5, 0, 0, 0},
+        {0, EXPLORER_1, 0, 0, 0},
+        {0, EXPLORER_2, 0, 0, 0},
+        {0, COLLECTOR_1, 16000, 17000, 0},
+        {0, COLLECTOR_2, 10000, 1000, 1}},
+       {10000, 0}}};
+
+  uint8_t expected_result_true = 4;
+  uint8_t expected_result_false = MAX_PLANETS_NUMBER;
+  uint8_t result_true = is_ship_have_a_planet(COLLECTOR_1, test_game_data);
+  uint8_t result_false = is_ship_have_a_planet(COLLECTOR_2, test_game_data);
+
+  TEST_ASSERT_EQUAL_INT(expected_result_true, result_true);
+  TEST_ASSERT_EQUAL_INT(expected_result_false, result_false);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_get_angle_between_two_points);
@@ -263,5 +289,6 @@ int main() {
   RUN_TEST(test_set_planet_collection_status);
   RUN_TEST(test_update_planet_collection_status);
   RUN_TEST(test_get_nearest_planet_available);
+  RUN_TEST(test_is_ship_have_a_planet);
   UNITY_END(); // stop unit testing
 }
