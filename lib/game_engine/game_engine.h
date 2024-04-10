@@ -94,7 +94,7 @@ uint16_t get_angle_between_two_points(T_point starting_point,
 void show_planet(T_planet *planet);
 void initialize_game_data(T_game_data *game_data);
 void auto_collect_planet(uint8_t ship_id, T_game_data *game_data);
-void set_planet_collection_status(int8_t ship_ID, uint8_t planet_num,
+void set_planet_collection_status(int8_t busy_ship_ID, uint8_t planet_num,
                                   T_planet_status planet_status,
                                   T_game_data *game_data);
 void update_planet_collection_status(T_game_data *game_data);

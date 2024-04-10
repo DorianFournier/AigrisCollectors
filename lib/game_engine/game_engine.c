@@ -78,8 +78,8 @@ void collector_manager(uint8_t collector_id) {
     aquire_game_data_mutex();
 
     auto_collect_planet(COLLECTOR_1, game_data);
-    os_delay(OS_DELAY + 20);
-    auto_collect_planet(COLLECTOR_2, game_data);
+    // os_delay(OS_DELAY + 20);
+    // auto_collect_planet(COLLECTOR_2, game_data);
 
     // uint8_t planet_id = get_nearest_planet(COLLECTOR_1 - 1, game_data);
 
@@ -99,6 +99,10 @@ void collector_manager(uint8_t collector_id) {
 void attacker_manager(uint8_t id) {
   while (1) {
     aquire_game_data_mutex();
+
+    if (id == ATTACKER_1) {
+      follow_ship(game_data->ships[id - 1], game_data->ships[COLLECTOR_1 - 1]);
+    }
 
     if (id == ATTACKER_1 || id == ATTACKER_2 || id == ATTACKER_3 ||
         id == ATTACKER_4 || id == ATTACKER_5) {
@@ -380,14 +384,14 @@ void update_planet_collection_status(T_game_data *game_data) {
   }
 }
 
-void set_planet_collection_status(int8_t ship_ID, uint8_t planet_num,
+void set_planet_collection_status(int8_t busy_ship_ID, uint8_t planet_num,
                                   T_planet_status planet_status,
                                   T_game_data *game_data) {
   game_data->planets[planet_num].busy_ship_ID = ship_ID;
   game_data->planets[planet_num].planet_status = planet_status;
 }
 
-void auto_collect_planet(uint8_t ship_id, T_game_data *game_data) {
+void auto_collect_planet_2(uint8_t ship_id, T_game_data *game_data) {
   update_planet_collection_status(game_data);
   uint8_t planet_id = 0;
   bool flag = false;
@@ -395,6 +399,7 @@ void auto_collect_planet(uint8_t ship_id, T_game_data *game_data) {
   for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER; planet_num++) {
     if (game_data->planets[planet_num].busy_ship_ID == ship_id) {
       planet_id = planet_num;
+      break;
     } else {
       flag = true;
     }
