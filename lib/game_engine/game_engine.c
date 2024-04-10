@@ -38,7 +38,7 @@ char *generate_command(T_command_type command_type, uint8_t ship_id,
              speed);
     break;
   case FIRE_CMD:
-    if (ship_id >= ATTACKER_1 + 1 && ship_id <= ATTACKER_5 + 1) {
+    if (ship_id >= ATTACKER_1 && ship_id <= ATTACKER_5) {
       snprintf(command_buffer, BUFFER_SIZE, "FIRE %d %d\n", ship_id + 1, angle);
     }
     break;
