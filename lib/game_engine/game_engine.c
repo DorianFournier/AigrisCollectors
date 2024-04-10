@@ -33,7 +33,7 @@ char *generate_command(T_command_type command_type, uint8_t ship_id,
 
   switch (command_type) {
   case MOVE_CMD:
-    speed = check_desired_ship_speed(ship_id + 1, speed);
+    speed = check_desired_ship_speed(ship_id, speed);
     snprintf(command_buffer, BUFFER_SIZE, "MOVE %d %d %d\n", ship_id + 1, angle,
              speed);
     break;
@@ -477,30 +477,59 @@ void update_planet_collection_status_2(T_game_data *game_data) {
   }
 }
 
+void update_planet_collection_status_new_2(uint8_t ship_id,
+                                           T_game_data *game_data) {
+  for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER; planet_num++) {
+
+    if ((game_data->planets[planet_num].ship_ID != -1 &&
+         game_data->planets[planet_num].planet_saved !=
+             1)) // Manages a planet being collected
+    {
+      // putsMutex(" SHIP ID : ");
+      // putsMutex(game_data->planets[planet_num].ship_ID);
+      // TODO test with -1
+      set_planet_collection_status(ship_id, planet_num, COLLECTING, game_data);
+    } else if (game_data->planets[planet_num].ship_ID == -1 &&
+               (game_data->planets[planet_num].busy_ship_ID != -1 ||
+                game_data->planets[planet_num].planet_status !=
+                    FREE)) // Manages a busy planet with a destroyed ship
+    {
+      // int8_t actual_busy_ship = game_data->planets[planet_num].busy_ship_ID;
+      // if (game_data->ships[actual_busy_ship].broken == 1) {
+      set_planet_collection_status(-1, planet_num, FREE, game_data);
+      // }
+    }
+  }
+}
+
 void auto_collect_planet_2(uint8_t ship_id, T_game_data *game_data) {
   // update_planet_collection_status_2(game_data);
-
-  bool is_ship_available = false;
+  // update_planet_collection_status_new_2(ship_id, game_data);
+  static bool is_ship_available = false;
   uint8_t planet_id = 0;
 
   for (uint8_t planet_num = 0; planet_num < MAX_PLANETS_NUMBER; planet_num++) {
     if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
         game_data->planets[planet_num].ship_ID == -1 &&
         game_data->planets[planet_num].planet_status != COLLECTING) {
+      is_ship_available = false;
       // go_to_planet(game_data->ships[ship_id],
       // game_data->planets[planet_num]);
+
+      go_to_planet_new(ship_id, game_data->planets[planet_num]);
       set_planet_collection_status(ship_id, planet_num, COLLECTING_INCOMING,
                                    game_data);
-      go_to_planet_new(ship_id, game_data->planets[planet_num]);
 
       break;
     } else if (game_data->planets[planet_num].busy_ship_ID == (ship_id) &&
-               game_data->planets[planet_num].ship_ID != -1) {
+               game_data->planets[planet_num].ship_ID != -1 &&
+               game_data->planets[planet_num].planet_saved != 1) {
+      is_ship_available = false;
       // go_to_base(game_data->ships[ship_id], game_data->base,
       // COLLECTOR_SPEED);
-      set_planet_collection_status(ship_id, planet_num, COLLECTING, game_data);
-      go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
 
+      go_to_base_new(ship_id, game_data->base, COLLECTOR_SPEED);
+      set_planet_collection_status(ship_id, planet_num, COLLECTING, game_data);
       // while (1) {
       //   putsMutex("ON RENTRE JAMAISD LA GROOSS");
       //   os_delay(OS_DELAY);
@@ -518,6 +547,7 @@ void auto_collect_planet_2(uint8_t ship_id, T_game_data *game_data) {
     go_to_planet_new(ship_id, game_data->planets[planet_id]);
     set_planet_collection_status(ship_id, planet_id, COLLECTING_INCOMING,
                                  game_data);
+
   } else {
     // putsMutex("T TEUBE");
   }
