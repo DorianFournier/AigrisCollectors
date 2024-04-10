@@ -81,9 +81,11 @@ void collector_manager(uint8_t collector_id) {
   while (1) {
     aquire_game_data_mutex();
 
-    auto_collect_planet_2(COLLECTOR_1, game_data);
-    // os_delay(OS_DELAY + 20);
-    // auto_collect_planet(COLLECTOR_2, game_data);
+    auto_collect_planet_2(collector_id, game_data);
+    // auto_collect_planet_2(COLLECTOR_2, game_data);
+    //  auto_collect_planet_2(collector_id, game_data);
+    //   os_delay(OS_DELAY + 20);
+    //   auto_collect_planet(COLLECTOR_2, game_data);
 
     // uint8_t planet_id = get_nearest_planet(COLLECTOR_1, game_data);
 
