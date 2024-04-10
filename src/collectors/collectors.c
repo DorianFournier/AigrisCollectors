@@ -9,10 +9,10 @@ const osThreadAttr_t collectorsTask_attributes = {
 
 void StartCollectorTask_1(void *argument) {
   wait_start();
-  collector_manager(8);
+  collector_manager(COLLECTOR_1);
 }
 
 void StartCollectorTask_2(void *argument) {
   wait_start();
-  collector_manager(9);
+  collector_manager(COLLECTOR_2);
 }
