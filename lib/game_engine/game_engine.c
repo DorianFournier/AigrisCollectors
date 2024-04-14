@@ -70,14 +70,16 @@ void explorer_manager(uint8_t explorer_id) {
       if (can_ship_be_BROKEN(explorer_id, game_data)) {
         go_to_base(explorer_id, game_data->base, EXPLORER_SPEED);
       } else {
-        follow_ship(explorer_id, COLLECTOR_1, EXPLORER_SPEED, BOTTOM_RIGHT);
+        // follow_ship(explorer_id, COLLECTOR_1, EXPLORER_SPEED, BOTTOM_RIGHT);
+        set_ship(explorer_id, game_data);
       }
 
     } else if (explorer_id == EXPLORER_2) {
       if (can_ship_be_BROKEN(explorer_id, game_data)) {
         go_to_base(explorer_id, game_data->base, EXPLORER_SPEED);
       } else {
-        follow_ship(explorer_id, COLLECTOR_2, EXPLORER_SPEED, BOTTOM_RIGHT);
+        // follow_ship(explorer_id, COLLECTOR_2, EXPLORER_SPEED, BOTTOM_RIGHT);
+        set_ship(explorer_id, game_data);
       }
     }
     release_game_data_mutex();
@@ -104,31 +106,36 @@ void attacker_manager(uint8_t attacker_id) {
       if (can_ship_be_BROKEN(attacker_id, game_data)) {
         go_to_base(attacker_id, game_data->base, ATTACKER_SPEED);
       } else {
-        follow_ship(attacker_id, COLLECTOR_1, ATTACKER_SPEED, TOP_LEFT);
+        // follow_ship(attacker_id, COLLECTOR_1, ATTACKER_SPEED, TOP_LEFT);
+        set_ship(attacker_id, game_data);
       }
     } else if (attacker_id == ATTACKER_2) {
       if (can_ship_be_BROKEN(attacker_id, game_data)) {
         go_to_base(attacker_id, game_data->base, ATTACKER_SPEED);
       } else {
-        follow_ship(attacker_id, COLLECTOR_1, ATTACKER_SPEED, TOP_RIGHT);
+        // follow_ship(attacker_id, COLLECTOR_1, ATTACKER_SPEED, TOP_RIGHT);
+        set_ship(attacker_id, game_data);
       }
     } else if (attacker_id == ATTACKER_3) {
       if (can_ship_be_BROKEN(attacker_id, game_data)) {
         go_to_base(attacker_id, game_data->base, ATTACKER_SPEED);
       } else {
-        follow_ship(attacker_id, COLLECTOR_2, ATTACKER_SPEED, TOP_LEFT);
+        // follow_ship(attacker_id, COLLECTOR_2, ATTACKER_SPEED, TOP_LEFT);
+        set_ship(attacker_id, game_data);
       }
     } else if (attacker_id == ATTACKER_4) {
       if (can_ship_be_BROKEN(attacker_id, game_data)) {
         go_to_base(attacker_id, game_data->base, ATTACKER_SPEED);
       } else {
-        follow_ship(attacker_id, COLLECTOR_2, ATTACKER_SPEED, TOP_RIGHT);
+        // follow_ship(attacker_id, COLLECTOR_2, ATTACKER_SPEED, TOP_RIGHT);
+        set_ship(attacker_id, game_data);
       }
     } else if (attacker_id == ATTACKER_5) {
       if (can_ship_be_BROKEN(attacker_id, game_data)) {
         go_to_base(attacker_id, game_data->base, ATTACKER_SPEED);
       } else {
-        follow_ship(attacker_id, COLLECTOR_2, ATTACKER_SPEED, BOTTOM_LEFT);
+        // follow_ship(attacker_id, COLLECTOR_2, ATTACKER_SPEED, BOTTOM_LEFT);
+        set_ship(attacker_id, game_data);
       }
     }
 
@@ -349,11 +356,11 @@ void follow_ship(uint8_t follower_ship_id, uint8_t ship_to_follow_id,
                  T_follower_ship_direction relative_position) {
 
   uint16_t distance_follower_ship = 0;
-  if (follower_ship_id >= EXPLORER_1 && follower_ship_id <= EXPLORER_2) {
-    distance_follower_ship = EXPLORER_DISTANCE_FOLLOWER_SHIP;
-  } else {
-    distance_follower_ship = ATTACKER_DISTANCE_FOLLOWER_SHIP;
-  }
+  // if (follower_ship_id >= EXPLORER_1 && follower_ship_id <= EXPLORER_2) {
+  //   distance_follower_ship = EXPLORER_DISTANCE_FOLLOWER_SHIP;
+  // } else {
+  //   distance_follower_ship = ATTACKER_DISTANCE_FOLLOWER_SHIP;
+  // }
 
   T_ship follower_ship = game_data->ships[follower_ship_id];
   T_point follower_ship_pos = get_ship_position(follower_ship);
@@ -378,6 +385,21 @@ void follow_ship(uint8_t follower_ship_id, uint8_t ship_to_follow_id,
       MOVE_CMD, follower_ship_id,
       get_angle_between_two_points(follower_ship_pos, go_to_pos),
       follower_ship_speed));
+}
+
+void set_ship(uint8_t ship_id, T_game_data *game_data) {
+  if (game_data->ships[COLLECTOR_1].pos_Y <
+      game_data->ships[COLLECTOR_2].pos_Y) {
+    for (uint8_t s_p = ATTACKER_1; s_p <= EXPLORER_2; s_p++) {
+      follow_ship(s_p, COLLECTOR_2, COLLECTOR_SPEED, TOP);
+    }
+  }
+  if (game_data->ships[COLLECTOR_1].pos_Y >
+      game_data->ships[COLLECTOR_2].pos_Y) {
+    for (uint8_t s_p = ATTACKER_1; s_p <= EXPLORER_2; s_p++) {
+      follow_ship(s_p, COLLECTOR_1, COLLECTOR_SPEED, TOP);
+    }
+  }
 }
 
 T_ship_type get_ship_type(uint8_t ship_id) {
@@ -646,14 +668,14 @@ T_fire_result fire_on_enemy_ship(uint8_t attacker_id, uint8_t enemy_ship_id,
       get_ship_position(game_data->ships[attacker_id]),
       get_ship_position(game_data->ships[enemy_ship_id]));
 
-  if (distance <= FIRE_DISTANCE) {
+  // if (distance <= FIRE_DISTANCE) {
+  if (game_data->ships[enemy_ship_id].ship_ID != 0 &&
+      game_data->ships[enemy_ship_id].broken != 1) {
     if (get_ship_FSM(attacker_id, game_data) == READY) {
       send_command(generate_command(FIRE_CMD, attacker_id, angle, 0));
     }
-    if (game_data->ships[enemy_ship_id].broken) {
-      return DESTROYED;
-    }
   }
+
   return OUT_OF_RANGE;
 }
 

@@ -129,6 +129,7 @@ uint16_t get_angle_for_follower_ship(uint8_t ship_id, uint16_t angle,
 void show_planet(T_planet *planet);
 void initialize_game_data(T_game_data *game_data);
 void auto_collect_planet(uint8_t ship_id, T_game_data *game_data);
+void set_ship(uint8_t ship_id, T_game_data *game_data);
 
 int8_t get_planet_ID_from_ship(uint8_t ship_id, T_game_data *game_data);
 T_point get_ship_position(T_ship ship);
