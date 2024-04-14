@@ -355,7 +355,7 @@ void follow_ship(uint8_t follower_ship_id, uint8_t ship_to_follow_id,
                  uint16_t follower_ship_speed,
                  T_follower_ship_direction relative_position) {
 
-  uint16_t distance_follower_ship = 0;
+  uint16_t distance_follower_ship = 100;
   // if (follower_ship_id >= EXPLORER_1 && follower_ship_id <= EXPLORER_2) {
   //   distance_follower_ship = EXPLORER_DISTANCE_FOLLOWER_SHIP;
   // } else {
@@ -371,7 +371,7 @@ void follow_ship(uint8_t follower_ship_id, uint8_t ship_to_follow_id,
   uint16_t distance =
       get_distance_between_two_points(follower_ship_pos, go_to_pos);
 
-  if (distance < FOLLOW_SHIP_SPEED_DISTANCE_THRESHOLD) {
+  if (distance <= FOLLOW_SHIP_SPEED_DISTANCE_THRESHOLD) {
     follower_ship_speed = check_desired_ship_speed(
         ship_to_follow_id, PLACE_HOLDER_FOLLOWING_MAX_SPEED);
   } else {
